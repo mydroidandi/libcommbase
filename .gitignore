@@ -1,6 +1,6 @@
 
 # Ignore bundled models
-bundles/vosk/
+bundles/vosk/model/
 
 # Ignore IDE specific files
 .idea/
