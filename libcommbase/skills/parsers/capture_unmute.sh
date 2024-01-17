@@ -1,11 +1,11 @@
+#!/usr/bin/env bash
 ################################################################################
-#                                  libcommbase                                 #
+#                                   Commbase                                   #
 #                                                                              #
-# A collection of libraries to centralize common functions that can be shared  #
-# across multiple conversational AI assistant projects                         #
+# Conversational AI Assistant and AI Hub for Computers and Droids              #
 #                                                                              #
 # Change History                                                               #
-# 05/02/2023  Esteban Herrera Original code.                                   #
+# 04/29/2023  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -13,7 +13,7 @@
 ################################################################################
 ################################################################################
 #                                                                              #
-#  Copyright (c) 2023-present Esteban Herrera C.                               #
+#  Copyright (c) 2022-present Esteban Herrera C.                               #
 #  stv.herrera@gmail.com                                                       #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify        #
@@ -30,6 +30,16 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# setup.sh
-# TODO: Description
+# capture_unmute.sh
+# A key binding, or an association between a physical key on a keyboard and a
+# parameter to unmute the sound capture.
 
+# Starts capturing sound that the Commbase recognition requires to work.
+# Uses the keyboard binding ALT-SHIFT-3.
+capture_unmute() {
+  (amixer set Capture cap &>/dev/null || exit 99);
+}
+
+capture_unmute || exit 99;
+
+exit 99
