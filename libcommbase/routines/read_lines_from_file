@@ -5,7 +5,7 @@
 # across multiple conversational AI assistant projects                         #
 #                                                                              #
 # Change History                                                               #
-# 05/02/2023  Esteban Herrera Original code.                                   #
+# 06/03/2023  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -30,6 +30,16 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# setup.sh
-# TODO: Description
+# read_lines_from_file
+# Reads all the lines from a plain text file and echoes line by line
+read_lines_from_file() {
+  local file=$1
+  local lines=()
+
+  while IFS= read -r line; do
+    lines+=("$line")
+  done < "$file"
+
+  printf '%s\n' "${lines[@]}"
+}
 
