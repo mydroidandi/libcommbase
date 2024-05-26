@@ -1,4 +1,4 @@
-#!usr//bin/env bash
+#!/bin/env bash
 ################################################################################
 #                                  libcommbase                                 #
 #                                                                              #
@@ -6,7 +6,7 @@
 # across multiple conversational AI assistant projects                         #
 #                                                                              #
 # Change History                                                               #
-# 02/13/2024  Esteban Herrera Original code.                                   #
+# 03/27/2024  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -31,42 +31,44 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
-  source "$COMMBASE_APP_DIR"/config/commbase.conf
+# cleanup_directory_by_file_count.sh
+# Cleans up a directory based on the number of files it contains. Provides a
+# mechanism to maintain a specified file count threshold in a directory by
+# removing excess files, prioritizing deletion based on the creation time of
+# files.
+cleanup_directory_by_file_count() {
+  # Check if the directory exists
+  if [ ! -d "$directory" ]; then
+    echo "Directory $directory does not exist."
+    exit 1
+  fi
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+  # Delete files when the number of files exceeds the threshold
+  file_count=$(find "$directory" -maxdepth 1 -type f ! -name ".gitkeep" | wc -l)
+  if [ "$file_count" -gt "$file_count_threshold" ]; then
+    excess_files=$((file_count - file_count_threshold))
+    echo "Deleting $excess_files oldest files..."
 
-  cd "$COMMBASE_APP_DIR"/data || exit
+    # Use stat to get creation time and sort files by creation time
+    find "$directory" -maxdepth 1 -type f ! -name ".gitkeep" -exec stat -c "%W %n" {} + | sort -n | head -n "$excess_files" | cut -d ' ' -f 2- | xargs rm
+  fi
 
-  # Path to the JSON file
-  json_file=".messages.json"
-
-  # New value for "control"
-  new_control_value="$1"
-
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
-
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
+  echo "Cleanup based on file count completed."
 
   exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
+# Check if the number of arguments is correct
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <file_count_threshold> <directory>"
   exit 1
 fi
 
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
+# Assign parameters to variables
+file_count_threshold=$1  # Expected to be integer by arithmetic operations
+directory="$2"
+
+# Call the function
+(cleanup_directory_by_file_count "$1" "$2")
 
 exit 99

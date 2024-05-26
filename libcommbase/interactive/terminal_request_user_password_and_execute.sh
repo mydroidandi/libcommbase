@@ -1,4 +1,4 @@
-#!usr//bin/env bash
+#!/usr/bin/env bash
 ################################################################################
 #                                  libcommbase                                 #
 #                                                                              #
@@ -6,7 +6,7 @@
 # across multiple conversational AI assistant projects                         #
 #                                                                              #
 # Change History                                                               #
-# 02/13/2024  Esteban Herrera Original code.                                   #
+# 05/16/2024  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -14,7 +14,7 @@
 ################################################################################
 ################################################################################
 #                                                                              #
-#  Copyright (c) 2023-present Esteban Herrera C.                               #
+#  Copyright (c) 2022-present Esteban Herrera C.                               #
 #  stv.herrera@gmail.com                                                       #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify        #
@@ -31,42 +31,45 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
-  source "$COMMBASE_APP_DIR"/config/commbase.conf
+# terminal_request_user_password_and_execute.sh
+# Description: This script prompts the user for their password and, if
+# validated, executes the given command with optional parameters.
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+# Function to request the user's password and validate it
+terminal_request_user_password_and_execute() {
+  local command="$1"
+  local parameter_1="$2"
+  local parameter_2="$3"
+  local username
 
-  cd "$COMMBASE_APP_DIR"/data || exit
+  # Get the current username
+  username=$(whoami)
 
-  # Path to the JSON file
-  json_file=".messages.json"
+  # Prompt for the user's password
+  echo -n "Please enter your password: "
+  read -r -s user_password
+  echo
 
-  # New value for "control"
-  new_control_value="$1"
+  # Validate the password using 'su'
+  echo "$user_password" | su -c "exit" "$username" >/dev/null 2>&1
+  local su_exit_status=$?
 
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
-
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
+  if [ $su_exit_status -eq 0 ]; then
+    echo "Password validated."
+    # Execute the command with parameters
+    (eval "$command" "$parameter_1" "$parameter_2")
+  else
+    echo "Incorrect password or permission denied."
+    exit 1
+  fi
 
   exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
-  exit 1
+# Call terminal_request_user_password_and_execute if the script is run directly
+# (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  (terminal_request_user_password_and_execute "$1" "$2" "$3")
 fi
-
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
 
 exit 99

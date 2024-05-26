@@ -6,7 +6,7 @@
 # across multiple conversational AI assistant projects                         #
 #                                                                              #
 # Change History                                                               #
-# 02/13/2024  Esteban Herrera Original code.                                   #
+# 03/25/2024  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -14,7 +14,7 @@
 ################################################################################
 ################################################################################
 #                                                                              #
-#  Copyright (c) 2023-present Esteban Herrera C.                               #
+#  Copyright (c) 2022-present Esteban Herrera C.                               #
 #  stv.herrera@gmail.com                                                       #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify        #
@@ -31,42 +31,31 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
+# discourse_data_exchange_server_error.sh
+# Handles the presentation and logging of the assistant discourse message with
+# the discourse key data_exchange_server_error. It is called without parameters from
+# any programming language, assuming the responsibility to run
+# assistant_discourse.sh internally to make sure that the discourse is in the
+# language of choice.
+discourse_data_exchange_server_error() {
+  # The configuration file
   source "$COMMBASE_APP_DIR"/config/commbase.conf
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+  # Imports from libcommbase
+  assistant_discourse=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/assistant_discourse.sh
 
-  cd "$COMMBASE_APP_DIR"/data || exit
+  time=0.1
 
-  # Path to the JSON file
-  json_file=".messages.json"
-
-  # New value for "control"
-  new_control_value="$1"
-
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
-
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
+  # Call assistant_discourse with the arguments: pane, i18n, origin,
+  # log_severity_level_1, discourse_key.
+  (clear; bash "$assistant_discourse" 7 2 "data-exchange-server" "$LOG_SEVERITY_LEVEL_1" data_exchange_server_error && sleep "$time");
 
   exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
-  exit 1
+# Call discourse_data_exchange_server_error if the script is run directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  (discourse_data_exchange_server_error)
 fi
-
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
 
 exit 99

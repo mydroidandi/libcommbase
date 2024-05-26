@@ -5,11 +5,11 @@
 
 <img alt="libcommbase" src="libcommbase.jpg?raw=true" width="512" height="512" />
 
-libcommbase is a collection of libraries to centralize common functions that can be shared across multiple conversational AI assistant projects. It operates offline and can be implemented with AI (ML/DS) and programming languages.
+libcommbase is a collection of libraries to centralize common functions that can be shared across multiple conversational AI Powered assistant projects. It operates offline and can be implemented with AI (ML/DS) and programming languages.
 
 ## controller
 
-libcommbase comes with a number of useful, reliable, and mutually exclusive control messages that can be recorded and sent forward to get processed by skill applications. These control messages can also be changed or customized in its respective patterns file, and ultimately, increase or decrease in number preferably during your app designing phase. These out-of-the-box controls are:
+libcommbase comes with a number of possible reliable and mutually exclusive control messages that can be recorded and sent forward to get processed by skill applications. These control messages can also be changed or customized in its respective patterns file, and ultimately, increase or decrease in number preferably during your app designing phase. These out-of-the-box controls are:
 
 ### Cancel previous actions
 

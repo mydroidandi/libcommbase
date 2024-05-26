@@ -31,42 +31,25 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
+# run_voice_recorder_in_pane.sh
+# Run the recorder-transmitter for Bash or for Shell, as specified in the
+# variable RECORDER_TRANSMITTER_FILE.
+run_voice_recorder_in_pane() {
+  # Imports
   source "$COMMBASE_APP_DIR"/config/commbase.conf
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+  # Run the recorder-transmitter
+  (tmux select-window -t 1 && tmux select-pane -t "$pane" && tmux send-keys " clear; bash $COMMBASE_APP_DIR/$RECORDER_TRANSMITTER_FILE" C-m);
 
-  cd "$COMMBASE_APP_DIR"/data || exit
-
-  # Path to the JSON file
-  json_file=".messages.json"
-
-  # New value for "control"
-  new_control_value="$1"
-
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
-
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
-
-  exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
+# Check if both text and delay are provided as arguments
+if [ $# -ne 1 ]; then
+  echo "Usage: $0 <pane>"
   exit 1
 fi
 
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
+# Global declarations
+pane="$1"
 
-exit 99
+(run_voice_recorder_in_pane "$pane")

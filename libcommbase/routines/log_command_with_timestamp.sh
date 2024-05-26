@@ -6,7 +6,7 @@
 # across multiple conversational AI assistant projects                         #
 #                                                                              #
 # Change History                                                               #
-# 02/13/2024  Esteban Herrera Original code.                                   #
+# 05/22/2024  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -14,7 +14,7 @@
 ################################################################################
 ################################################################################
 #                                                                              #
-#  Copyright (c) 2023-present Esteban Herrera C.                               #
+#  Copyright (c) 2022-present Esteban Herrera C.                               #
 #  stv.herrera@gmail.com                                                       #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify        #
@@ -31,42 +31,53 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
+# log_command_with_timestamp.sh
+# Logs messages either to a specified log file or to the output, based on
+# parameters passed to it. It sources configuration settings from a file
+# (commbase.conf), reads translation files to support multiple languages, and
+# calculates the elapsed time since the script started. The script formats and
+# logs messages with details including the origin, severity level, and
+# translated message.
+log_command_with_timestamp() {
+  # The configuration file
   source "$COMMBASE_APP_DIR"/config/commbase.conf
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+  # The path to the log messages file
+  log_file="$command_log_file_path"
 
-  cd "$COMMBASE_APP_DIR"/data || exit
+  # Log the complete message
+  log() {
+    # The date +"%s.%N" command ensures that you get the current time in seconds
+    # since the epoch followed by nanoseconds.
+    # timestamp=$(date +"%s.%N")
+    timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    # If log_file_path_on is False, the script prints only in the output
+    if [ "$LOG_COMMANDS_TO_FILE_ON" == "True" ]; then
+      echo "[$timestamp] $origin: $log_severity_level: $command" >> "$log_file"
+    else
+      echo "LOG_COMMANDS_TO_FILE_ON is set to False" 2> /dev/null
+    fi
+  }
 
-  # Path to the JSON file
-  json_file=".messages.json"
-
-  # New value for "control"
-  new_control_value="$1"
-
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
-
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
+  (log)
 
   exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
+# Check if all the required values are provided as arguments
+if [ $# -ne 4 ]; then
+  echo "Usage: $0 <origin> <log_severity_level> <command> <command_log_file_path>"
   exit 1
 fi
 
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
+# Global declarations
+
+# Extract origin, log severity level, and message from command line arguments
+origin="$1"
+log_severity_level="$2"
+command="$3"
+command_log_file_path="$4"
+
+(log_command_with_timestamp "$origin" "$log_severity_level" "$command" "$command_log_file_path")
 
 exit 99

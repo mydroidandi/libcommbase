@@ -1,12 +1,10 @@
-#!usr//bin/env bash
 ################################################################################
-#                                  libcommbase                                 #
+#                                   Commbase                                   #
 #                                                                              #
-# A collection of libraries to centralize common functions that can be shared  #
-# across multiple conversational AI assistant projects                         #
+# AI Powered Conversational Assistant for Computers and Droids                 #
 #                                                                              #
 # Change History                                                               #
-# 02/13/2024  Esteban Herrera Original code.                                   #
+# 04/29/2023  Esteban Herrera Original code.                                   #
 #                           Add new history entries as needed.                 #
 #                                                                              #
 #                                                                              #
@@ -14,7 +12,7 @@
 ################################################################################
 ################################################################################
 #                                                                              #
-#  Copyright (c) 2023-present Esteban Herrera C.                               #
+#  Copyright (c) 2022-present Esteban Herrera C.                               #
 #  stv.herrera@gmail.com                                                       #
 #                                                                              #
 #  This program is free software; you can redistribute it and/or modify        #
@@ -31,42 +29,50 @@
 #  along with this program; if not, write to the Free Software                 #
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA   #
 
-# update_control_in_messages_json.sh
-# Updates any control in data/.messages.json and calls
-# request_commbase_data_exchange.sh.
-update_control_in_messages_json() {
-  # Configuration file
+# server_skill.sh
+# Reads the new JSON data request stored in commbase-data-exchange/server/client_data,
+# searches for a Commbase skill or skillset that matches the request in the
+# directory, and calls the updater in the server side.
+server_skill() {
+  # The configuration files
   source "$COMMBASE_APP_DIR"/config/commbase.conf
+  source "$COMMBASE_APP_DIR"/src/client/config/app.conf
+  source "$COMMBASE_APP_DIR"/src/client/config/secrets
 
-  # Import from libcommbase
-  request_commbase_data_exchange=$COMMBASE_APP_DIR/bundles/libcommbase/libcommbase/routines/request_commbase_data_exchange.sh
+  # Read the new JSON data request stored in commbase-data-exchange/server/client_data
+  data_exchange_client_data_file=/bundles/commbase-data-exchange/server/client_data/json_1.json
 
-  cd "$COMMBASE_APP_DIR"/data || exit
+  messages=$(<"$COMMBASE_APP_DIR"$data_exchange_client_data_file)
 
-  # Path to the JSON file
-  json_file=".messages.json"
+  # Extract and echo each message
+  #echo "$messages" | jq -r '.messages[] | to_entries[] | "\(.key): \(.value)"'
 
-  # New value for "control"
-  new_control_value="$1"
+  # Extract and echo the entry corresponding to "control"
+  #echo "$messages" | jq -r '.messages[] | select(.control != null) | to_entries[] | "\(.key): \(.value)"'
 
-  # messages[0] refers to the first element of the messages array in the JSON
-  # data, and the code modifies the control field of that element while keeping
-  # the JSON data in one line.
-  jq --arg new_value "$new_control_value" '.messages[0].control = $new_value' "$json_file" | jq -c '.' > "$json_file.tmp" && mv "$json_file.tmp" "$json_file"
+  # Store only the value of "current_request" without the key
+  current_request=$(echo "$messages" | jq -r '.messages[] | select(.current_request != null) | .current_request')
 
-  # Send the messages request through commbase-data-exchange client
-  bash "$request_commbase_data_exchange"
+  echo "Current request:" "$current_request"
+
+  # Search for a Commbase skill or skillset that matches the request in the
+  # directory.
+  # TODO:
+  echo "SEARCHING FOR SKILL OR SKILLSET IN THE DIRECTORY ..."
+
+
+  # Call the uploader in the server
+  # TODO:
+
+  # Store only the value of "current_request" without the key
+  current_request=$(echo "$messages" | jq -r '.messages[] | select(.current_request != null) | .current_request')
 
   exit 99
 }
 
-# Check if a new_control_value is provided as a command-line argument
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 <new_control_value>"
-  exit 1
+# Call server_skill if the script is run directly (not sourced)
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  (server_skill)
 fi
-
-# Call the function with the provided new_control_value
-(update_control_in_messages_json "$1")
 
 exit 99
